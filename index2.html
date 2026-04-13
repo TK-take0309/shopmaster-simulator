@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ショップマスター1&2 シミュレーター</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',Arial,sans-serif;background:#f5f5f5;color:#222;min-height:100vh;}
+header{background:#2E4057;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:12px;}
+header h1{font-size:18px;font-weight:700;}
+header .sub{font-size:12px;opacity:0.7;}
+.container{max-width:1000px;margin:0 auto;padding:16px;}
+.ctrl{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+.tab{padding:6px 14px;border:1.5px solid #aaa;border-radius:20px;background:#fff;color:#555;cursor:pointer;font-size:13px;}
+.tab.on{background:#2E4057;border-color:#2E4057;color:#fff;font-weight:700;}
+select{font-size:13px;padding:5px 10px;border:1.5px solid #aaa;border-radius:8px;background:#fff;}
+button{padding:6px 14px;border:1.5px solid #aaa;border-radius:8px;background:#fff;color:#222;cursor:pointer;font-size:13px;}
+button:hover{background:#f0f0f0;}
+button.pri{background:#1565C0;border-color:#1565C0;color:#fff;font-weight:700;}
+button.pri:hover{background:#0d47a1;}
+button:disabled{opacity:0.4;cursor:not-allowed;}
+.phase{font-size:12px;font-weight:700;margin-bottom:8px;padding:8px 12px;background:#E3F2FD;border-radius:8px;color:#1565C0;border-left:4px solid #1565C0;}
+.log{font-size:12px;color:#222;min-height:72px;margin-bottom:12px;padding:10px 14px;background:#fff;border-radius:8px;line-height:1.9;border:1px solid #ddd;border-left:4px solid #1565C0;}
+.ok{color:#2E7D32;font-weight:700;}
+.ng{color:#C62828;}
+.sp{color:#6A1B9A;font-weight:700;background:#F3E5F5;padding:1px 5px;border-radius:4px;}
+.info{color:#1565C0;}
+.turn-bar{display:flex;gap:6px;margin-bottom:10px;align-items:center;}
+.tdot{width:28px;height:28px;border-radius:50%;border:2px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#888;background:#fff;}
+.tdot.done{background:#E8F5E9;color:#2E7D32;border-color:#2E7D32;}
+.tdot.now{background:#1565C0;color:#fff;border-color:#1565C0;}
+.tlabel{font-size:12px;color:#888;margin-left:4px;}
+.main{display:grid;grid-template-columns:1fr 220px;gap:12px;margin-bottom:12px;}
+@media(max-width:700px){.main{grid-template-columns:1fr;}}
+.players{display:grid;gap:10px;}
+.pbox{background:#fff;border:1.5px solid #ddd;border-radius:12px;padding:10px 12px;}
+.pbox.leader{border:2px solid #2E7D32;background:#F9FFF9;}
+.phdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.pname{font-size:13px;font-weight:700;}
+.pmoney{font-size:15px;font-weight:700;color:#2E7D32;}
+.psec{font-size:10px;color:#888;margin:5px 0 3px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;}
+.cards{display:flex;flex-wrap:wrap;gap:5px;}
+.card{border-radius:8px;padding:5px 8px;font-size:10px;border:1.5px solid;}
+.s1{background:#F1F8E9;border-color:#7CB342;color:#33691E;}
+.s2{background:#E3F2FD;border-color:#1976D2;color:#0D47A1;}
+.s3{background:#FCE4EC;border-color:#E91E63;color:#880E4F;}
+.cs{background:#EDE7F6;border-color:#7E57C2;color:#311B92;}
+.cn{font-size:10px;font-weight:700;margin-bottom:2px;}
+.ci{font-size:9px;opacity:0.85;line-height:1.5;}
+.cm{font-size:9px;margin-top:2px;}
+.mc{color:#1565C0;font-weight:700;}
+.mm{color:#2E7D32;font-weight:700;}
+.mf{color:#B71C1C;font-weight:700;}
+.sidebar{display:flex;flex-direction:column;gap:10px;}
+.sbox{background:#fff;border:1.5px solid #ddd;border-radius:12px;padding:10px 12px;}
+.stitle{font-size:12px;font-weight:700;color:#333;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #eee;}
+.drow{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #f0f0f0;cursor:pointer;}
+.drow:last-child{border-bottom:none;}
+.drow:hover .dlabel{color:#1565C0;}
+.dlabel{font-size:11px;color:#666;}
+.dval{font-size:12px;font-weight:700;}
+.bank-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f0f0f0;}
+.bank-row:last-child{border-bottom:none;}
+.bd{font-size:11px;color:#666;}
+.bv{font-size:11px;font-weight:700;}
+.bup{color:#2E7D32;font-size:10px;margin-left:3px;}
+.bdn{color:#C62828;font-size:10px;margin-left:3px;}
+.btotal{display:flex;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1.5px solid #ddd;}
+.modal{background:#fff;border:1.5px solid #ddd;border-radius:12px;padding:12px;margin-bottom:12px;}
+.mhdr{font-size:13px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+.close-btn{font-size:11px;color:#666;cursor:pointer;padding:2px 8px;border:1px solid #ccc;border-radius:6px;}
+.close-btn:hover{background:#f0f0f0;}
+.result{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+.rcrd{flex:1;min-width:100px;background:#fff;border:1.5px solid #ddd;border-radius:12px;padding:12px;text-align:center;}
+.rlbl{font-size:11px;color:#888;margin-bottom:4px;}
+.rval{font-size:20px;font-weight:700;}
+.winner{color:#2E7D32;}
+.cust-card{border-radius:8px;padding:7px 9px;font-size:10px;border:1.5px solid #FFA000;background:#FFFDE7;color:#333;width:100%;}
+.cust-name{font-size:11px;font-weight:700;margin-bottom:4px;color:#E65100;}
+.cust-basic{font-size:10px;margin-bottom:3px;}
+.cust-master{font-size:9px;border-top:1px solid #FFA000;margin-top:4px;padding-top:4px;color:#1565C0;}
+.cust-mlabel{font-size:9px;font-weight:700;}
+.sm1tag{display:inline-block;font-size:9px;background:#E8F5E9;border:1px solid #4CAF50;color:#1B5E20;border-radius:4px;padding:0 5px;margin-bottom:3px;}
+.sm2tag{display:inline-block;font-size:9px;background:#EDE7F6;border:1px solid #9C27B0;color:#4A148C;border-radius:4px;padding:0 5px;margin-bottom:3px;}
+.modal .cards{max-height:300px;overflow-y:auto;}
+</style>
+</head>
+<body>
+<header>
+  <h1>ショップマスター 1&2 シミュレーター</h1>
+  <span class="sub">あにまるシティ</span>
+</header>
+<div class="container">
+  <div class="ctrl">
+    <div class="tab on" onclick="setMode('easy')">かんたん</div>
+    <div class="tab" onclick="setMode('master')">マスター</div>
+    <select id="np"><option value="2">2人</option><option value="3">3人</option><option value="4" selected>4人</option></select>
+    <button onclick="initGame()">新しいゲーム</button>
+    <button id="btn-back" onclick="goBack()" disabled>◀ 戻る</button>
+    <button id="btn-next" class="pri" onclick="nextStep()">次へ ▶</button>
+    <button id="btn-auto" onclick="toggleAuto()">自動再生</button>
+  </div>
+  <div class="turn-bar" id="turn-bar"></div>
+  <div class="phase" id="phase">「新しいゲーム」を押してスタートします</div>
+  <div class="log" id="log">ショップマスター1&2 合体シミュレーター（特殊カードあり）</div>
+  <div id="modal-area"></div>
+  <div class="main">
+    <div class="players" id="players"></div>
+    <div class="sidebar" id="sidebar"></div>
+  </div>
+  <div id="result-area"></div>
+</div>
+<script>
+const SM1=[
+  {name:"たくさんのおりがみ",buy:300,sell:400,star:1,mark:"コンペイ"},
+  {name:"おもちゃがはいったカプセル",buy:200,sell:300,star:1,mark:"マネコ"},
+  {name:"あま〜いパン",buy:200,sell:300,star:1,mark:"フクマル"},
+  {name:"大好きなおかし",buy:100,sell:200,star:1,mark:"フクマル"},
+  {name:"おしゃれなバッグ",buy:700,sell:1000,star:2,mark:"コンペイ"},
+  {name:"わくわくお絵描きセット",buy:400,sell:600,star:2,mark:"コンペイ"},
+  {name:"お気に入りの水筒",buy:500,sell:800,star:2,mark:"コンペイ"},
+  {name:"シャボン玉セット",buy:300,sell:500,star:2,mark:"マネコ"},
+  {name:"かわいいぬいぐるみ",buy:500,sell:700,star:2,mark:"マネコ"},
+  {name:"カラフルねんど",buy:400,sell:600,star:2,mark:"マネコ"},
+  {name:"たまごたっぷりサンドイッチ",buy:300,sell:500,star:2,mark:"フクマル"},
+  {name:"最高のゲームセット",buy:1500,sell:2500,star:3,mark:null},
+  {name:"キラキラ腕時計",buy:1200,sell:2000,star:3,mark:null},
+  {name:"ごほうびケーキ",buy:1000,sell:1500,star:3,mark:null},
+];
+const SM2=[
+  {name:"フワフワ雲マシュマロ",buy:100,sell:200,star:1,mark:"マネコ"},
+  {name:"へんしんボイスの実",buy:200,sell:300,star:1,mark:"フクマル"},
+  {name:"ビリビリサンダースナック",buy:200,sell:300,star:1,mark:"コンペイ"},
+  {name:"流れ星ドロップ",buy:300,sell:400,star:1,mark:"マネコ"},
+  {name:"ふくふく肉球せっけん",buy:300,sell:500,star:2,mark:"フクマル"},
+  {name:"どこでも冒険コンパス",buy:400,sell:600,star:2,mark:"コンペイ"},
+  {name:"ジェットスピードシューズ",buy:400,sell:600,star:2,mark:"マネコ"},
+  {name:"ひみつの宝さがし地図",buy:500,sell:700,star:2,mark:"コンペイ"},
+  {name:"魔法レンズ・スターグラス",buy:500,sell:800,star:2,mark:"フクマル"},
+  {name:"ドングリの変身リング",buy:400,sell:600,star:2,mark:"マネコ"},
+  {name:"思い出カメラ",buy:500,sell:800,star:2,mark:"フクマル"},
+  {name:"アイドルのキラキラマイク",buy:1000,sell:1500,star:3,mark:null},
+  {name:"空飛ぶじゅうたん",buy:1200,sell:2000,star:3,mark:null},
+  {name:"魔法の扉",buy:1500,sell:2500,star:3,mark:null},
+];
+const CUSTS=[
+  {id:1,name:"いらっしゃいませ",basic:"★1を1枚売る",master:"★1フクマル手持ちで追加売却"},
+  {id:2,name:"モグモグタイム",basic:"★1を1枚・フクマル+100円",master:"★1手持ちで追加売却"},
+  {id:3,name:"わくわくでいっぱい",basic:"★1を2枚・フクマル+100円ずつ",master:"マネコ+200円ずつ"},
+  {id:4,name:"コレちょうだい♡",basic:"★1か★2を1枚",master:"マネコ+100円"},
+  {id:5,name:"いろいろ買ったよ！",basic:"★2を2枚・マネコ+100円ずつ",master:"異なるマーク+200円"},
+  {id:6,name:"便利グッズをください！",basic:"★2を1枚",master:"コンペイ+200円"},
+  {id:7,name:"ちょっと高くても欲しいな",basic:"★2を1枚・コンペイ+100円",master:"★1コンペイ手持ちで追加売却"},
+  {id:8,name:"2つありますか？",basic:"★2を2枚",master:"売れた2枚同じマーク+200円"},
+  {id:9,name:"お会計おねがいします",basic:"★2を2枚・コンペイ+100円ずつ",master:"2枚ともコンペイ+200円"},
+  {id:10,name:"お金持ちが来た！",basic:"★3を1枚売る",master:"売れたら+200円"},
+  {id:11,name:"お客さんがいっぱい！",basic:"★1と★2全部売る",master:"フクマル+100円ずつ"},
+  {id:12,name:"なぞのお客さんが来た",basic:"相手が選んだ商品1枚",master:"★1か★2+200円"},
+  {id:13,name:"いいお客さんが来た",basic:"★1か★2を+200円で1枚",master:"コンペイかフクマル+100円"},
+  {id:14,name:"おすすめ商品です♡",basic:"自由に1枚・★3+100円・★1か★2+200円",master:"なし"},
+  {id:15,name:"全部売れた～！！",basic:"手持ち全部売る",master:"なし"},
+  {id:16,name:"光のまほうつかい ルミア",basic:"★1を1枚売る",master:"★1マネコ手持ちで追加売却"},
+  {id:17,name:"にじの王子 リプリン",basic:"★1を1枚・マネコ+100円",master:"★1手持ちで追加売却"},
+  {id:18,name:"森のおもちゃ職人 ハリー",basic:"★1を2枚・フクマル+100円ずつ",master:"マネコ+200円ずつ"},
+  {id:19,name:"歌うアイドル ピンキー",basic:"★1か★2を1枚",master:"マネコ+100円"},
+  {id:20,name:"たびのぼうけんか タイヨウ",basic:"★2を2枚・コンペイ+100円ずつ",master:"異なるマーク+200円"},
+  {id:21,name:"バンダナ海ぞく リオ",basic:"★1を1枚売る",master:"★1フクマル手持ちで追加売却"},
+  {id:22,name:"ゆっくりたびあんない カーメル",basic:"★2を1枚・コンペイ+100円",master:"★1コンペイ手持ちで追加売却"},
+  {id:23,name:"ぽかぽか物語ライター カピーノ",basic:"★2を2枚・手持ちマーク2種+200円",master:"売れた2枚同じマーク+200円"},
+  {id:24,name:"おさんぽ司祭 ワンリオ",basic:"★1を2枚・フクマル+100円ずつ",master:"マネコ+200円ずつ"},
+  {id:25,name:"さばくの王様 サンドラ",basic:"★3を1枚売る",master:"売値2,000円以上+300円・★3値引き300円"},
+  {id:26,name:"雪国の料理人 シロ",basic:"★1と★2全部売る",master:"マネコ+100円ずつ"},
+  {id:27,name:"うたうたい ルフィン",basic:"相手が選んだ商品1枚",master:"★1か★2+200円"},
+  {id:28,name:"月のステージダンサー ルナラ",basic:"★1か★2を+200円で1枚",master:"マネコかコンペイ+100円"},
+  {id:29,name:"宝さがしの ポンタ",basic:"自由に1枚選んで売る",master:"★1か★2+200円・最終+200円"},
+  {id:30,name:"はこびや スカーフィ",basic:"手持ち全部売る",master:"なし"},
+];
+const SPECS=[
+  {id:1,timing:"pre",name:"特殊カード1",effect:"★1売上+200円"},
+  {id:2,timing:"any",name:"特殊カード2",effect:"手札2枚→仕入れ値回収"},
+  {id:3,timing:"any",name:"特殊カード3",effect:"全員手持ち時計回りに渡す"},
+  {id:4,timing:"any",name:"特殊カード4",effect:"じゃんけんで500円"},
+  {id:5,timing:"any",name:"特殊カード5",effect:"相手の手持ち1枚捨て"},
+  {id:6,timing:"any",name:"特殊カード6",effect:"全員手持ち1枚捨て"},
+  {id:7,timing:"pre",name:"特殊カード7",effect:"相手マスタールール無効"},
+  {id:8,timing:"any",name:"特殊カード8",effect:"相手から200円奪う"},
+];
+const BANK_INIT={1000:12,500:20,100:38};
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function makeDeck(){const d=[];[...SM1,...SM2].forEach(p=>{const n=p.star===3?1:2;for(let i=0;i<n;i++)d.push({...p});});return shuffle(d);}
+function getCust(id){return CUSTS.find(c=>c.id===id);}
+function isSM1(id){return id<=15;}
+function bankTotal(b){return b[1000]*1000+b[500]*500+b[100]*100;}
+function bankPay(b,amt){let r=amt;for(const d of[1000,500,100]){const u=Math.min(b[d],Math.floor(r/d));b[d]-=u;r-=u*d;}}
+function bankReceive(b,amt){let r=amt;for(const d of[1000,500,100]){const u=Math.floor(r/d);b[d]+=u;r-=u*d;}}
+function deepClone(o){return JSON.parse(JSON.stringify(o));}
+
+function prodCard(c){
+  const sc=`s${c.star}`;
+  const mc=c.mark==="コンペイ"?'mc':c.mark==="マネコ"?'mm':c.mark==="フクマル"?'mf':'';
+  return `<div class="card ${sc}"><div class="cn">${'★'.repeat(c.star)} ${c.name}</div><div class="ci">仕${c.buy}円 / 売${c.sell}円</div>${c.mark?`<div class="cm"><span class="${mc}">${c.mark}</span></div>`:''}</div>`;
+}
+function custCard(c,showMaster){
+  const tag=isSM1(c.id)?`<span class="sm1tag">SM1</span>`:`<span class="sm2tag">SM2</span>`;
+  return `<div class="cust-card">${tag}<div class="cust-name">${c.name}</div><div class="cust-basic">基本：${c.basic}</div>${showMaster&&c.master!=='なし'?`<div class="cust-master"><span class="cust-mlabel">マスター：</span>${c.master}</div>`:''}</div>`;
+}
+function specCard(c,used){return `<div class="card cs"><div class="cn">${c.name}${used?' (使用済)':''}</div><div class="ci">${c.effect}</div><div class="ci">${c.timing==='pre'?'販売前に使う':'いつでも使える'}</div></div>`;}
+
+let G={np:0};let history=[];let historyLogs=[];let autoTimer=null;let mode='easy';let showModal=null;
+
+function setMode(m){mode=m;document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',(i===0&&m==='easy')||(i===1&&m==='master')));}
+function saveHistory(msg,phase){history.push(deepClone(G));historyLogs.push({msg,phase,bank:deepClone(G.bank)});document.getElementById('btn-back').disabled=history.length<=1;}
+function goBack(){
+  if(history.length<=1)return;
+  history.pop();historyLogs.pop();
+  G=deepClone(history[history.length-1]);
+  const prev=historyLogs[historyLogs.length-1];
+  document.getElementById('log').innerHTML=prev?prev.msg:'';
+  document.getElementById('phase').textContent=prev?prev.phase:'';
+  document.getElementById('btn-back').disabled=history.length<=1;
+  showModal=null;render();
+}
+function initGame(){
+  if(autoTimer){clearInterval(autoTimer);autoTimer=null;document.getElementById('btn-auto').textContent='自動再生';}
+  const np=parseInt(document.getElementById('np').value);
+  const isMaster=mode==='master';
+  const bank={...BANK_INIT};
+  if(isMaster)for(let i=0;i<np;i++)bankPay(bank,1000);
+  G={np,isMaster,turn:0,phase:'prep',step:0,
+    pool:makeDeck(),discard:[],
+    custDeck:shuffle(CUSTS.map(c=>c.id)),
+    hands:Array.from({length:np},()=>[]),
+    moneys:Array(np).fill(isMaster?1000:0),
+    custIds:Array(np).fill(null),
+    specDeck:isMaster?shuffle([...SPECS]):[],
+    specials:Array(np).fill(null),
+    specUsed:Array(np).fill(false),
+    masterBlocked:Array(np).fill(false),
+    sandraDiscount:Array(np).fill(0),
+    done:false,prepIdx:0,prepRound:0,bank,
+  };
+  if(isMaster)for(let i=0;i<np;i++)G.specials[i]=G.specDeck[i]||null;
+  history=[];historyLogs=[];showModal=null;
+  const msg=`【準備開始】SM1・SM2の商品カード計${G.pool.length}枚をシャッフルしました。お客さんカード30枚（SM1:15枚・SM2:15枚）も準備完了。${isMaster?`<br>各プレイヤーに初期資金1,000円を配布。特殊カードをランダムに1枚ずつ配りました（クローズ）。`:''}`;
+  saveHistory(msg,'準備フェーズ');setLog(msg,'準備フェーズ');render();
+}
+function draw(){if(!G.pool.length){if(G.discard.length){G.pool=[...G.discard];G.discard=[];shuffle(G.pool);}else return null;}return G.pool.shift();}
+function setLog(msg,phase){document.getElementById('log').innerHTML=msg;if(phase)document.getElementById('phase').textContent=phase;}
+function nextStep(){if(G.done||!G.np)return;if(G.phase==='prep')doPrepStep();else if(G.phase==='turn')doTurnStep();else if(G.phase==='end')doEnd();}
+
+function doPrepStep(){
+  const{np,isMaster}=G;const p=G.prepIdx;const c=draw();let msg='';
+  if(c){
+    if(isMaster){
+      if(G.moneys[p]>=c.buy){G.hands[p].push(c);G.moneys[p]-=c.buy;bankReceive(G.bank,c.buy);msg=`【準備 第${G.prepRound+1}回 P${p+1}】<br>「${'★'.repeat(c.star)}${c.name}（仕入れ${c.buy}円・売値${c.sell}円${c.mark?' '+c.mark:''}）」を引きました。<br>→ <span class="ok">仕入れ決定！残金：${G.moneys[p]}円</span>`;}
+      else{G.discard.push(c);msg=`【準備 第${G.prepRound+1}回 P${p+1}】<br>「${'★'.repeat(c.star)}${c.name}（仕入れ${c.buy}円）」を引きましたが...<br>→ <span class="ng">資金不足のため捨て札へ（現在${G.moneys[p]}円）</span>`;}
+    }else{G.hands[p].push(c);msg=`【準備 第${G.prepRound+1}回 P${p+1}】<br>「${'★'.repeat(c.star)}${c.name}（売値${c.sell}円${c.mark?' '+c.mark:''}）」を引きました → 手持ちに追加（${G.hands[p].length}枚）`;}
+  }
+  G.prepIdx=(G.prepIdx+1)%np;if(G.prepIdx===0)G.prepRound++;
+  let phase='';
+  if(G.prepRound>=3){G.phase='turn';G.turn=1;G.step=0;msg+=`<br><br><span class="ok">全員の手持ちが3枚になりました！ターン1を開始します。</span>`;phase='ターン1 ― お客さんカードを引きます';}
+  else phase=`準備フェーズ（${G.prepRound}周目 / P${G.prepIdx+1}の番）`;
+  saveHistory(msg,phase);setLog(msg,phase);render();
+}
+
+function doTurnStep(){
+  const{np,isMaster,turn}=G;const s=G.step;
+  if(s<np){
+    const p=s;
+    if(!G.custDeck.length)G.custDeck=shuffle(CUSTS.map(c=>c.id));
+    G.custIds[p]=G.custDeck.shift();
+    const cust=getCust(G.custIds[p]);
+    const sm=isSM1(cust.id)?'SM1':'SM2';
+    let msg=`【ターン${turn} P${p+1} お客さんカードを引く】<br>`;
+    msg+=`引いたカード：<span class="info">[${sm}]「${cust.name}」</span><br>基本ルール：${cust.basic}<br>`;
+    if(isMaster)msg+=`マスタールール：${cust.master}`;
+    if(isMaster&&!G.specUsed[p]&&G.specials[p]?.timing==='pre'){
+      const sp=G.specials[p];const richest=G.moneys.indexOf(Math.max(...G.moneys));
+      const target=richest===p?(p+1)%np:richest;let use=false;
+      if(sp.id===1&&G.hands[p].some(c=>c.star===1))use=true;
+      if(sp.id===7&&turn<=4){use=true;G.masterBlocked[target]=true;}
+      if(use){G.specUsed[p]=true;msg+=`<br><span class="sp">▶ 特殊「${sp.effect}」販売前に使用！${sp.id===7?`→P${target+1}（${G.moneys[target]}円・首位）マスタールール無効！`:'→★1商品に+200円ボーナス！'}</span>`;}
+    }
+    const phase=`ターン${turn} ― P${p+1}がお客さんカードを引きました（${sm}）`;
+    saveHistory(msg,phase);setLog(msg,phase);G.step++;render();return;
+  }
+  if(s<np*2){
+    const p=s-np;const cid=G.custIds[p];const cust=getCust(cid);
+    const h=[...G.hands[p]];let sold=[],income=0;
+    if([1,6,16,21].includes(cid)){const c=h.find(c=>c.star===1);if(c){sold=[c];income=c.sell;}}
+    else if([2].includes(cid)){const c=h.find(c=>c.star===1);if(c){sold=[c];income=c.sell+(c.mark==='フクマル'?100:0);}}
+    else if([17].includes(cid)){const c=h.find(c=>c.star===1);if(c){sold=[c];income=c.sell+(c.mark==='マネコ'?100:0);}}
+    else if([3,18,24].includes(cid)){const cs=h.filter(c=>c.star===1).slice(0,2);cs.forEach(c=>{income+=c.sell+(c.mark==='フクマル'?100:0);});sold=cs;}
+    else if([4,19].includes(cid)){const c=h.find(c=>c.star<=2);if(c){sold=[c];income=c.sell;}}
+    else if([5].includes(cid)){const cs=h.filter(c=>c.star===2).slice(0,2);cs.forEach(c=>{income+=c.sell+(c.mark==='マネコ'?100:0);});sold=cs;}
+    else if([20].includes(cid)){const cs=h.filter(c=>c.star===2).slice(0,2);cs.forEach(c=>{income+=c.sell+(c.mark==='コンペイ'?100:0);});sold=cs;}
+    else if([7,22].includes(cid)){const c=h.find(c=>c.star===2);if(c){sold=[c];income=c.sell+(c.mark==='コンペイ'?100:0);}}
+    else if([8].includes(cid)){const cs=h.filter(c=>c.star===2).slice(0,2);cs.forEach(c=>{income+=c.sell;});sold=cs;}
+    else if([23].includes(cid)){const cs=h.filter(c=>c.star===2).slice(0,2);const marks=new Set(h.map(c=>c.mark).filter(Boolean));const flat=marks.size>=2?200:0;cs.forEach(c=>{income+=c.sell+flat;});sold=cs;}
+    else if([9].includes(cid)){const cs=h.filter(c=>c.star===2).slice(0,2);cs.forEach(c=>{income+=c.sell+(c.mark==='コンペイ'?100:0);});sold=cs;}
+    else if([10,25].includes(cid)){const cs=h.filter(c=>c.star===3);cs.forEach(c=>{income+=c.sell;});sold=cs;}
+    else if([11,26].includes(cid)){const cs=h.filter(c=>c.star<=2);cs.forEach(c=>{income+=c.sell;});sold=cs;}
+    else if([12,27].includes(cid)){if(h.length>0){const c=h[Math.floor(Math.random()*h.length)];sold=[c];income=c.sell;}}
+    else if([13,28].includes(cid)){const c=h.find(c=>c.star<=2);if(c){sold=[c];income=c.sell+200;}}
+    else if([14,29].includes(cid)){if(h.length>0){sold=[h[0]];income=h[0].sell;}}
+    else if([15,30].includes(cid)){h.forEach(c=>{income+=c.sell;});sold=[...h];}
+    let spBonus=0;
+    if(isMaster&&G.specials[p]?.id===1&&G.specUsed[p]){spBonus=sold.filter(c=>c.star===1).length*200;income+=spBonus;}
+    let masterIncome=0,masterNote='';
+    if(isMaster&&!G.masterBlocked[p]){
+      const rem=h.filter(c=>!sold.includes(c));
+      if([1,6,21].includes(cid)){const c=rem.find(c=>c.star===1&&c.mark==='フクマル');if(c){sold.push(c);masterIncome+=c.sell;masterNote=`マスター発動：★1フクマル「${c.name}」追加売却+${c.sell}円`;}}
+      else if([16].includes(cid)){const c=rem.find(c=>c.star===1&&c.mark==='マネコ');if(c){sold.push(c);masterIncome+=c.sell;masterNote=`マスター発動：★1マネコ「${c.name}」追加売却+${c.sell}円`;}}
+      else if([2].includes(cid)){const c=rem.find(c=>c.star===1);if(c){sold.push(c);masterIncome+=c.sell;masterNote=`マスター発動：★1手持ち「${c.name}」追加売却+${c.sell}円`;}}
+      else if([17].includes(cid)){const c=rem.find(c=>c.star===1);if(c){sold.push(c);masterIncome+=c.sell;masterNote=`マスター発動：★1手持ち「${c.name}」追加売却+${c.sell}円`;}}
+      else if([3,18,24].includes(cid)){masterIncome=sold.reduce((s,c)=>s+(c.mark==='マネコ'?200:0),0);if(masterIncome>0)masterNote=`マスター発動：マネコ+200円ずつ（+${masterIncome}円）`;}
+      else if([4,19].includes(cid)&&sold[0]?.mark==='マネコ'){masterIncome=100;masterNote='マスター発動：マネコ+100円';}
+      else if([5,20].includes(cid)&&sold.length===2){const ms=sold.map(c=>c.mark).filter(Boolean);if(new Set(ms).size===2){masterIncome=200;masterNote='マスター発動：異なるマーク+200円';}}
+      else if([6].includes(cid)&&sold[0]?.mark==='コンペイ'){masterIncome=200;masterNote='マスター発動：コンペイ+200円';}
+      else if([7,22].includes(cid)){const c=rem.find(c=>c.star===1&&c.mark==='コンペイ');if(c){sold.push(c);masterIncome+=c.sell;masterNote=`マスター発動：★1コンペイ「${c.name}」追加売却+${c.sell}円`;}}
+      else if([8,23].includes(cid)&&sold.length===2){const ms=sold.map(c=>c.mark).filter(Boolean);if(ms.length===2&&ms[0]===ms[1]){masterIncome=200;masterNote='マスター発動：同じマーク+200円';}}
+      else if([9].includes(cid)&&sold.length===2&&sold.every(c=>c.mark==='コンペイ')){masterIncome=200;masterNote='マスター発動：2枚ともコンペイ+200円';}
+      else if([10].includes(cid)&&sold.length>0){masterIncome=200;masterNote='マスター発動：売れたら+200円';}
+      else if([11].includes(cid)){masterIncome=sold.reduce((s,c)=>s+(c.mark==='フクマル'?100:0),0);if(masterIncome>0)masterNote=`マスター発動：フクマル+100円ずつ（+${masterIncome}円）`;}
+      else if([26].includes(cid)){masterIncome=sold.reduce((s,c)=>s+(c.mark==='マネコ'?100:0),0);if(masterIncome>0)masterNote=`マスター発動：マネコ+100円ずつ（+${masterIncome}円）`;}
+      else if([12,27].includes(cid)&&sold[0]?.star<=2){masterIncome=200;masterNote='マスター発動：★1か★2+200円';}
+      else if([13].includes(cid)&&['コンペイ','フクマル'].includes(sold[0]?.mark)){masterIncome=100;masterNote=`マスター発動：${sold[0].mark}+100円`;}
+      else if([28].includes(cid)&&['マネコ','コンペイ'].includes(sold[0]?.mark)){masterIncome=100;masterNote=`マスター発動：${sold[0].mark}+100円`;}
+      else if([25].includes(cid)&&sold[0]?.sell>=2000){masterIncome=300;masterNote='マスター発動：売値2,000円以上+300円';G.sandraDiscount[p]=300;}
+      else if([14,29].includes(cid)){if(sold[0]?.star<=2)masterIncome+=200;if(turn===5)masterIncome+=200;if(masterIncome>0)masterNote=`マスター発動：+${masterIncome}円`;}
+      income+=masterIncome;
+    }
+    if(G.masterBlocked[p]){masterNote='<span class="ng">特殊カードの効果でマスタールール無効！</span>';G.masterBlocked[p]=false;}
+    sold.forEach(c=>{const i=G.hands[p].indexOf(c);if(i>=0){G.hands[p].splice(i,1);G.discard.push(c);}});
+    G.moneys[p]+=income;bankPay(G.bank,income);
+    let spLog='';
+    if(isMaster&&!G.specUsed[p]&&G.specials[p]?.timing==='any'){
+      const sp=G.specials[p];const richest=G.moneys.indexOf(Math.max(...G.moneys));
+      const target=richest===p?(p+1)%np:richest;const isLosing=G.moneys[p]<Math.max(...G.moneys)-500;
+      let used=false;
+      if(sp.id===2&&G.hands[p].length>=2&&(isLosing||turn>=3)){const tv=G.hands[p].slice(0,2).reduce((s,c)=>s+c.buy,0);G.hands[p].slice(0,2).forEach(c=>{const i=G.hands[p].indexOf(c);if(i>=0){G.hands[p].splice(i,1);G.discard.push(c);}});G.moneys[p]+=tv;bankPay(G.bank,tv);spLog=`<span class="sp">▶ 特殊「${sp.effect}」→+${tv}円（理由：${isLosing?'劣勢逆転':'終盤現金化'}）</span>`;used=true;}
+      else if(sp.id===4&&(isLosing||turn>=4)){const w=Math.random()<0.5;if(w){G.moneys[p]+=500;bankPay(G.bank,500);}spLog=`<span class="sp">▶ 特殊「${sp.effect}」→${w?'勝利+500円':'敗北'}（理由：${isLosing?'劣勢逆転':'終盤使用'}）</span>`;used=true;}
+      else if(sp.id===5&&G.hands[target].length>0&&(isLosing||G.moneys[p]===Math.max(...G.moneys))){const best=G.hands[target].reduce((a,b)=>a.sell>b.sell?a:b);const i=G.hands[target].indexOf(best);G.hands[target].splice(i,1);G.discard.push(best);spLog=`<span class="sp">▶ 特殊「${sp.effect}」→P${target+1}の「${best.name}」捨て（理由：首位妨害）</span>`;used=true;}
+      else if(sp.id===6&&turn>=3&&isLosing){const rm=[];for(let i=0;i<np;i++){if(G.hands[i].length>0){const best=G.hands[i].reduce((a,b)=>a.sell>b.sell?a:b);const idx=G.hands[i].indexOf(best);G.hands[i].splice(idx,1);G.discard.push(best);rm.push(`P${i+1}:${best.name}`);}}spLog=`<span class="sp">▶ 特殊「${sp.effect}」→全員捨て(${rm.join('、')})（理由：道連れ）</span>`;used=true;}
+      else if(sp.id===8&&G.moneys[target]>=200&&(isLosing||turn>=3)){const amt=Math.min(200,G.moneys[target]);G.moneys[target]-=amt;G.moneys[p]+=amt;spLog=`<span class="sp">▶ 特殊「${sp.effect}」→P${target+1}から${amt}円奪取（理由：首位から奪う）</span>`;used=true;}
+      if(used)G.specUsed[p]=true;
+    }
+    const sm=isSM1(cid)?'SM1':'SM2';
+    const soldNames=sold.length>0?sold.map(c=>`「${'★'.repeat(c.star)}${c.name}(${c.sell}円)」`).join('と'):'売れる商品がありませんでした';
+    let msg=`【ターン${turn} P${p+1} 販売】<br>[${sm}]「${cust.name}」→${cust.basic}<br>売れた商品：${soldNames}<br>`;
+    if(spBonus>0)msg+=`<span class="sp">特殊★1ボーナス：+${spBonus}円</span><br>`;
+    if(masterNote)msg+=`${masterNote}<br>`;
+    msg+=`<span class="ok">今ターン収入：+${income}円 → 所持金：${G.moneys[p]}円</span>`;
+    if(spLog)msg+=`<br>${spLog}`;
+    const phase=`ターン${turn} ― P${p+1}が販売（${sm}:${cust.name}）`;
+    saveHistory(msg,phase);setLog(msg,phase);G.step++;render();return;
+  }
+  if(turn<5&&s<np*2+np){
+    const p=s-np*2;let msg=`【ターン${turn} P${p+1} 仕入れタイム】<br>`;
+    if(G.isMaster){
+      let bought=0,flipped=0,details=[];
+      while(flipped<5&&bought<2){
+        const c=draw();if(!c)break;flipped++;
+        const disc=c.star===3?G.sandraDiscount[p]:0;const ab=c.buy-disc;
+        if(G.moneys[p]>=ab){G.hands[p].push(c);G.moneys[p]-=ab;bankReceive(G.bank,ab);bought++;details.push(`「${'★'.repeat(c.star)}${c.name}」${disc>0?` ★3値引き-${disc}円`:''}→ <span class="ok">仕入れ${ab}円</span>`);}
+        else{G.discard.push(c);details.push(`「${'★'.repeat(c.star)}${c.name}」(${ab}円)→ <span class="ng">資金不足でパス</span>`);}
+      }
+      G.sandraDiscount[p]=0;
+      msg+=`${flipped}枚めくって${bought}枚仕入れ<br>${details.join('<br>')}<br>残金：${G.moneys[p]}円　手持ち：${G.hands[p].length}枚`;
+    }else{
+      const c=draw();
+      if(c){G.hands[p].push(c);msg+=`「${'★'.repeat(c.star)}${c.name}(${c.sell}円${c.mark?' '+c.mark:''}）」を引いて追加（${G.hands[p].length}枚）`;}
+      else msg+=`山札が空でした。`;
+    }
+    const phase=`ターン${turn} ― P${p+1}が仕入れ中`;
+    saveHistory(msg,phase);setLog(msg,phase);G.step++;render();
+    if(s===np*2+np-1)advanceTurn();return;
+  }
+  if(turn===5&&s===np*2){advanceTurn();return;}
+  if(turn<5&&s===np*2+np){advanceTurn();return;}
+}
+
+function advanceTurn(){
+  if(G.turn>=5){G.phase='end';G.done=false;const msg=`【5ターン終了！】最後にじゃんけんをして勝った人が+200円もらえます。`;saveHistory(msg,'ゲーム終了 ― じゃんけんへ');setLog(msg,'ゲーム終了 ― じゃんけんへ');}
+  else{G.turn++;G.step=0;G.custIds=Array(G.np).fill(null);const msg=`【ターン${G.turn} 開始】お客さんカードを順番に引いていきます。`;saveHistory(msg,'ターン'+G.turn+' 開始');setLog(msg,'ターン'+G.turn+' 開始');render();}
+}
+
+function doEnd(){
+  const jw=Math.floor(Math.random()*G.np);G.moneys[jw]+=200;bankPay(G.bank,200);G.done=true;
+  const max=Math.max(...G.moneys);const winner=G.moneys.indexOf(max);
+  const allM=G.moneys.reduce((s,m)=>s+m,0);
+  const msg=`【じゃんけん】P${jw+1}が勝って+200円！<br><br>【最終結果】${G.moneys.map((m,i)=>`P${i+1}：${m}円`).join('　')}<br><span class="ok">P${winner+1}が${max}円で優勝！ショップマスターです！</span>`;
+  saveHistory(msg,'ゲーム終了！');setLog(msg,'ゲーム終了！');render();
+}
+
+function showDeckModal(type){showModal=showModal===type?null:type;render();}
+function toggleAuto(){
+  if(autoTimer){clearInterval(autoTimer);autoTimer=null;document.getElementById('btn-auto').textContent='自動再生';}
+  else{document.getElementById('btn-auto').textContent='停止';autoTimer=setInterval(()=>{if(G.done){clearInterval(autoTimer);autoTimer=null;document.getElementById('btn-auto').textContent='自動再生';}else nextStep();},1200);}
+}
+
+function render(){
+  if(!G.np)return;
+  const{np,isMaster,turn,hands,moneys,specials,specUsed,custIds,done,pool,discard,custDeck,bank}=G;
+  const pnames=['P1','P2','P3','P4'];
+  document.getElementById('btn-back').disabled=history.length<=1;
+  document.getElementById('turn-bar').innerHTML=
+    Array.from({length:5},(_,i)=>{const cls=i+1<turn?'done':i+1===turn?'now':'';return `<div class="tdot ${cls}">${i+1}</div>`;}).join('')+
+    `<span class="tlabel">ターン${turn>0?turn:'-'} / 5　履歴${history.length}ステップ</span>`;
+  const ma=document.getElementById('modal-area');
+  if(showModal){
+    let title='',content='';
+    if(showModal==='pool'){title=`商品山札（${pool.length}枚）`;content=`<div class="cards">${pool.map(c=>prodCard(c)).join('')||'空'}</div>`;}
+    else if(showModal==='discard'){title=`商品捨て札（${discard.length}枚）`;content=`<div class="cards">${discard.map(c=>prodCard(c)).join('')||'まだありません'}</div>`;}
+    else if(showModal==='cust'){title=`お客さん山札（${custDeck.length}枚）`;content=`<div class="cards">${custDeck.map(id=>{const c=getCust(id);return custCard(c,isMaster);}).join('')||'空'}</div>`;}
+    ma.innerHTML=`<div class="modal"><div class="mhdr">${title}<span class="close-btn" onclick="showDeckModal('${showModal}')">閉じる</span></div>${content}</div>`;
+  }else ma.innerHTML='';
+  const maxM=Math.max(...moneys);
+  const pl=document.getElementById('players');
+  pl.style.gridTemplateColumns=np<=2?'1fr 1fr':np===3?'1fr 1fr 1fr':'1fr 1fr 1fr 1fr';
+  pl.innerHTML=Array.from({length:np},(_,p)=>{
+    const isLeader=!done&&moneys[p]===maxM;
+    const cid=custIds[p];const cust=cid?getCust(cid):null;const sp=specials[p];
+    return `<div class="pbox ${isLeader?'leader':''}">
+      <div class="phdr"><span class="pname">${pnames[p]}${isLeader?' [首位]':''}</span><span class="pmoney">${moneys[p].toLocaleString()}円</span></div>
+      ${sp?`<div class="psec">特殊カード</div><div class="cards">${specCard(sp,specUsed[p])}</div>`:''}
+      ${cust?`<div class="psec">お客さんカード</div>${custCard(cust,isMaster)}`:''}
+      <div class="psec">手持ち（${hands[p].length}枚）</div>
+      <div class="cards">${hands[p].map(c=>prodCard(c)).join('')||'<span style="font-size:10px;color:#999">なし</span>'}</div>
+    </div>`;
+  }).join('');
+  const prevB=historyLogs.length>=2?historyLogs[historyLogs.length-2].bank:null;
+  function diff(d){if(!prevB||!bank)return'';const delta=bank[d]-prevB[d];if(delta===0)return'';return delta>0?`<span class="bup">+${delta}</span>`:`<span class="bdn">${delta}</span>`;}
+  const bt=bank?bankTotal(bank):0;const allM=moneys.reduce((s,m)=>s+m,0);
+  document.getElementById('sidebar').innerHTML=`
+    <div class="sbox">
+      <div class="stitle">山札・捨て札</div>
+      <div class="drow" onclick="showDeckModal('pool')"><span class="dlabel">商品山札</span><span class="dval">${pool.length}枚</span></div>
+      <div class="drow" onclick="showDeckModal('discard')"><span class="dlabel">商品捨て札</span><span class="dval">${discard.length}枚</span></div>
+      <div class="drow" onclick="showDeckModal('cust')"><span class="dlabel">お客さん山札</span><span class="dval">${custDeck.length}枚</span></div>
+    </div>
+    <div class="sbox">
+      <div class="stitle">銀行</div>
+      ${bank?`
+      <div class="bank-row"><span class="bd">1,000円札</span><span class="bv">${bank[1000]}枚${diff(1000)}</span></div>
+      <div class="bank-row"><span class="bd">500円玉</span><span class="bv">${bank[500]}枚${diff(500)}</span></div>
+      <div class="bank-row"><span class="bd">100円玉</span><span class="bv">${bank[100]}枚${diff(100)}</span></div>
+      <div class="btotal"><span class="bd">銀行合計</span><span class="bv" style="color:#2E7D32">${bt.toLocaleString()}円</span></div>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #eee">
+        <div class="bank-row"><span class="bd" style="font-size:10px">全P合計</span><span class="bv" style="font-size:10px">${allM.toLocaleString()}円</span></div>
+        <div class="bank-row"><span class="bd" style="font-size:10px;font-weight:700">総計</span><span class="bv" style="font-size:10px;color:#1565C0">${(bt+allM).toLocaleString()}円</span></div>
+      </div>`:'<div style="font-size:11px;color:#999">ゲーム開始後に表示</div>'}
+    </div>
+  `;
+  const ra=document.getElementById('result-area');
+  if(done){const max2=Math.max(...moneys);ra.innerHTML=`<div class="result">${moneys.map((m,i)=>`<div class="rcrd"><div class="rlbl">${pnames[i]}</div><div class="rval ${m===max2?'winner':''}">${m.toLocaleString()}円${m===max2?'<br>優勝！':''}</div></div>`).join('')}</div>`;}
+  else ra.innerHTML='';
+}
+</script>
+</body>
+</html>
